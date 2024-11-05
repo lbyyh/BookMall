@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>书城 - 买卖书籍</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* 在这里添加其他自定义样式 */
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h1 class="text-center mb-4">书城</h1>
+    <div id="book-store" class="row">
+        <!-- 书籍列表可以在这里动态插入 -->
+    </div>
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            <li class="page-item disabled">
+                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">上一页</a>
+            </li>
+            <!-- 分页按钮动态插入在这里 -->
+            <li class="page-item">
+                <a class="page-link" href="#">下一页</a>
+            </li>
+        </ul>
+    </nav>
+</div>
+<!-- 模态框（Modal） -->
+<div class="modal fade" id="buySellModal" tabindex="-1" aria-labelledby="buySellModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="buySellModalLabel">确认购买</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- 模态框内容将动态填充 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">关闭</button>
+                <button type="button" class="btn btn-primary">确认购买</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    let currentPage = 1; // 当前页码，默认为第一页
+    let perPage = 10; // 每页显示的书籍数量，默认为10
+
+    let totalPages = 2206; // 总页数，默认为1
+
+    let books = [];
+
+    // 当文档加载完毕时，调用loadBooks函数
+    $(document).ready(function() {
+        loadBooks(currentPage);
+    });
+
+    // updateBooks 函数现在被用于在 AJAX 请求成功后，保存返回的书籍列表
+    function updateBooks(data) {
+        books = data.books; // 保存书籍列表
+        displayBooks(data.books); // 显示书籍列表
+        updatePagination(currentPage, data.totalPages); // 设置分页页码
+    }
+
+    // 加载指定页码的书籍数据
+    function loadBooks(page) {
+        $.ajax({
+            url: '/book_info/list?page=' + page + '&perPage=' + perPage,
+            type: 'GET',
+            dataType: 'json',
+            success: function(result) {
+                if(result.code === 0) {
+                    updateBooks(result.data); // 使用新函数更新书籍列表和其他
+                    displayBooks(result.data.books); // 渲染书籍数据到页面上
+                    updatePagination(result.data.totalPages); // 更新分页控件
+                } else {
+                    console.error('加载图书列表失败:', result.message);
+                }
+            },
+            error: function(error) {
+                console.error('请求图书列表出错:', error.statusText);
+            }
+        });
+    }
+
+    // 显示书籍列表
+    function displayBooks(books) {
+        const bookStore = $('#book-store');
+        bookStore.empty(); // 清空容器
+        books.forEach(function(book) {
+            // 构建书籍HTML元素并添加到书籍容器中
+            const bookHTML = createBookElement(book);
+            bookStore.append(bookHTML);
+        });
+    }
+
+    // 构建书籍卡片的HTML内容
+    function createBookElement(book) {
+        const publishDate = new Date(book.PublishDate).toLocaleDateString();
+        return `
+        <div class="col-12 mb-2">
+            <div class="card flex-row">
+                <img src="${book.ImgUrl}" class="book-image rounded">
+                <div class="card-body">
+                    <h5 class="card-title">${book.BookName}</h5>
+                    <p class="card-text"><strong>作者:</strong> ${book.Author}</p>
+                    <p class="card-text"><strong>出版社:</strong> ${book.PublishingHouse}</p>
+                    <p class="card-text"><strong>发布日期:</strong> ${publishDate}</p>
+                    <p class="card-text"><strong>价格:</strong> ¥${book.Price}</p>
+                    <button class="btn btn-primary btn-sm btn-buy" data-id="${book.Id}" role="button">购买</button>
+                    <button class="btn btn-secondary btn-sm btn-sell" data-id="${book.Id}" role="button">出售</button>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+    // 更新分页按钮状态
+    function updatePagination(current, total) {
+        $('#current-page').text(`当前页码: ${current} / 总页数: ${total}`);
+        $('#prev-page').toggleClass('disabled', current === 1);
+        $('#next-page').toggleClass('disabled', current === total);
+    }
+
+    // 翻页处理
+    function changePage(direction) {
+        if((direction === -1 && currentPage > 1) || (direction === 1 && currentPage < totalPages)) {
+            currentPage += direction;
+            loadBooks(currentPage);
+        }
+    }
+
+
+    // 分页按钮点击事件处理
+    $(document).on('click', '#prev-page', function(event) {
+        event.preventDefault();
+        if (currentPage > 1) {
+            currentPage--;
+            loadBooks(currentPage);
+        }
+    });
+    $(document).on('click', '#next-page', function(event) {
+        event.preventDefault();
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadBooks(currentPage);
+        }
+    });
+
+    // 点击购买按钮显示模态框
+    $(document).on('click', '.btn-buy', function() {
+        const bookId = $(this).data('id'); // 确保确实能够获取到 data-id 属性
+        const bookData = books.find(book => book.Id === bookId);
+
+        // 确保找到了书籍数据
+        if (bookData) {
+            showBuySellModal(bookData, 'buy');
+        } else {
+            console.error('找不到 ID 为 ' + bookId + ' 的书籍');
+        }
+    });
+
+    // 点击出售按钮，调用此函数显示模态框
+    $(document).on('click', '.btn-sell', function() {
+        const bookId = $(this).data('id');
+        // 注意：这里以 JSON 数据中第一本书为例，实际中应根据该书的数据显示
+        const bookData = books.find(book => book.Id === bookId);
+        showBuySellModal(bookData, 'sell');
+    });
+
+
+    function showBuySellModal(book, action) {
+        const modalTitle = action === 'buy' ? '确认购买' : '确认出售';
+        $('#buySellModalLabel').text(modalTitle);
+
+        const modalBody = `
+        <p><strong>书名:</strong> ${book.BookName}</p>
+        <p><strong>作者:</strong> ${book.Author}</p>
+        <p><strong>单价:</strong> ¥<span id="bookPrice">${book.Price}</span></p>
+        <form id="buySellForm">
+            <div class="form-group">
+                <label for="bookQuantity">数量:</label>
+                <input type="number" class="form-control" id="bookQuantity" value="1" min="1">
+            </div>
+            <p><strong>总价:</strong> ¥<span id="totalPrice">${book.Price}</span></p>
+        </form>
+    `;
+
+        $('.modal-body').html(modalBody);
+
+        // 绑定数量输入变化的事件
+        $('#bookQuantity').on('change', function() {
+            const pricePerBook = parseFloat($('#bookPrice').text());
+            const quantity = parseInt($('#bookQuantity').val());
+            const totalPrice = (pricePerBook * quantity).toFixed(2);
+            $('#totalPrice').text(totalPrice);
+        });
+
+        // 配置确认按钮的点击事件
+        $('.btn-primary').off('click').on('click', function() {
+            const quantity = $('#bookQuantity').val();
+            const totalPrice = $('#totalPrice').text();
+            if(action === 'buy') {
+                // 调用后端支付接口
+                initiatePayment(totalPrice, function(success) {
+                    if(success) {
+                        alert(`你已成功购买了${quantity}本《${book.BookName}》。`);
+                    } else {
+                        alert(`购买失败，请稍后再试。`);
+                    }
+                });
+            } else {
+                // 这里可以添加出售书籍的逻辑
+                alert(`你已出售了${quantity}本《${book.BookName}》，总价为¥${totalPrice}。`);
+
+            }
+            $('#buySellModal').modal('hide');
+        });
+
+        // 函数用于调用后端支付接口，此处以GET请求为例
+        function initiatePayment(amount, callback) {
+            // TODO: 这里amount应该是被后端处理并生成支付请求的金额，可以由用户选择的书籍数量等决定
+            $.ajax({
+                url: '/alipay/pay', // 调用支付接口
+                type: 'POST',
+                data: {
+                    totalAmount: amount, // 发送支付金额到后端
+                    // 可能需要其他数据，比如书籍ID，用户ID等
+                },
+                success: function(response) {
+                    // 假设后端返回的response中含有重定向到支付宝的URL
+                    if(response.url) {
+                        window.location.href = response.url; // 重定向到支付宝进行支付
+                        if(callback) callback(true);
+                    } else {
+                        if(callback) callback(false);
+                    }
+                },
+                error: function(error) {
+                    console.error('请求支付失败:', error);
+                    if(callback) callback(false);
+                }
+            });
+        }
+
+
+        // 显示模态框
+        $('#buySellModal').modal('show');
+    }
+
+</script>
+</body>
+</html>

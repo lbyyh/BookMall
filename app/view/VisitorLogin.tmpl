@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理系统</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            color: #8BC34A;
+            text-align: center;
+        }
+        h2 {
+            color: #689F38;
+            text-align: center;
+        }
+        #book-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            padding: 0;
+            list-style-type: none;
+            margin: 0 auto;
+        }
+        #book-list li {
+            background-color: #DCEDC8;
+            border: 1px solid #C5E1A5;
+            padding: 15px;
+            margin-bottom: 20px; /* 增加底部外边距 */
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: calc(100% / 3 - 20px); /* 三列布局，并适当减小宽度 */
+            display: flex;
+            align-items: center; /* 垂直居中 */
+            justify-content: space-between; /* 横向分布 */
+        }
+        .book-info {
+            margin-right: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #8BC34A;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 20px; /* 圆角边框 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* 添加过渡效果 */
+        }
+        .btn:hover {
+            background-color: #7CB342;
+            transform: translateY(-2px); /* 轻微上移 */
+        }
+        .btn:active {
+            transform: translateY(1px); /* 按下时内陷效果 */
+        }
+        .btn:disabled {
+            background-color: #CDDC39;
+            cursor: not-allowed;
+            box-shadow: none; /* 禁用时无阴影 */
+        }
+        /* CSS部分继续在现有代码基础上添加 */
+        .btn {
+            /* ... 现有样式不变 ... */
+            margin: 10px 5px; /* 四周留出空间，避免相邻按钮紧挨 */
+        }
+
+        #logout-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .book-item {
+            display: flex;
+            align-items: center; /* 和文字内容垂直居中 */
+            margin-bottom: 20px; /* 书籍之间的间隔 */
+        }
+        .book-item img {
+            width: 100px; /* 图像宽度 */
+            height: 150px; /* 图像高度 */
+            object-fit: cover; /* 保持图像比例，填充整个元素大小 */
+            margin-right: 20px; /* 和文本内容的间隔 */
+            border-radius: 5px; /* 图像圆角 */
+        }
+        #pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px; /* 或者任何适当的边距 */
+        }
+        #pagination button {
+            margin: 0 5px; /* 两侧留一点空间 */
+        }
+    </style>
+</head>
+<body>
+
+<button id="logout-button" onclick="logout()">退出</button>
+<h1>欢迎来到图书管理系统</h1>
+<h2>图书列表</h2>
+<ul id="book-list">
+    <!-- 书籍列表将通过JavaScript动态填充 -->
+</ul>
+<!-- 分页控制 -->
+<div id="pagination">
+    <button id="prev-page" onclick="changePage(-1)">上一页</button>
+    <span id="current-page">1</span>
+    <button id="next-page" onclick="changePage(1)">下一页</button>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadBooks(1); // 初始加载第一页
+    });
+
+    // 当前页码和每页显示的数量
+    var currentPage = 1;
+    var perPage = 10; // 假设每页显示10条记录
+    var totalPages;
+
+    // 加载指定页码的书籍
+    function loadBooks(page) {
+        fetch('/book_info/GetPaginatedBooks?page=' + page + '&perPage=' + perPage)
+            .then(response => response.json())
+            .then(result => {
+                if(result.code === 0) {
+                    updateBooks(result.data.books); // 更新书籍列表
+                    totalPages = result.data.totalPages; // 更新总页数
+                    updatePagination(); // 更新页码显示和按钮状态
+                } else {
+                    console.error('加载图书列表失败:', result.message);
+                }
+            })
+            .catch(error => {
+                console.error('请求图书列表出错:', error);
+            });
+    }
+
+    // 处理翻页
+    function changePage(delta) {
+        var newPage = currentPage + delta;
+        if(newPage > 0 && newPage <= totalPages) {
+            currentPage = newPage;
+            loadBooks(currentPage); // 加载新的页码的书籍
+        }
+    }
+
+    // 更新分页状态
+    function updatePagination() {
+        document.getElementById('current-page').textContent = currentPage + '/' + totalPages;
+        document.getElementById('prev-page').disabled = currentPage === 1;
+        document.getElementById('next-page').disabled = currentPage === totalPages;
+    }
+
+    // 刷新书籍列表，可以替换现有的书籍列表显示代码
+    function updateBooks(books) {
+        const bookList = document.getElementById('book-list');
+        bookList.innerHTML = ''; // 清空现有书籍列表
+
+        books.forEach((book) => {
+            const listItem = document.createElement('li');
+            listItem.classList.add('book-item');
+            listItem.innerHTML = `
+            <img src="${book.ImgUrl}" alt="${book.BookName}" />
+            <div>
+                <strong>${book.BookName}</strong><br>
+                作者: ${book.Author}<br>
+                出版社: ${book.PublishingHouse}<br>
+                出版日期: ${book.PublishDate}<br>
+                <button data-id="${book.Id}" class="btn detail-button">详情</button>
+            </div>`;
+            bookList.appendChild(listItem);
+        });
+    }
+
+    function logout() {
+        alert('退出登录成功！');
+        window.location.replace("/index");
+    }
+</script>
+
+</body>
+</html>

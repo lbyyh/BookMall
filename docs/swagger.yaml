@@ -1,0 +1,303 @@
+definitions:
+  logic.User:
+    properties:
+      captcha_id:
+        type: string
+      captcha_value:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  model.Book:
+    properties:
+      cate:
+        type: string
+      created_time:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      num:
+        type: integer
+      status:
+        type: integer
+      uid:
+        type: integer
+      updated_time:
+        type: string
+    type: object
+  tools.ECode:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+info:
+  contact:
+    email: hzs
+    name: library API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /:
+    get:
+      consumes:
+      - text/html
+      description: 显示应用程序主页
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 成功渲染主页
+          schema:
+            type: string
+      summary: 主页服务
+      tags:
+      - general
+  /admin/login:
+    get:
+      consumes:
+      - text/html
+      description: 进行管理员登录并展示管理员首页
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 成功展示管理员登录页面
+          schema:
+            type: string
+      summary: 管理员登录服务
+      tags:
+      - login
+  /book/add:
+    post:
+      consumes:
+      - application/json
+      description: 添加一个新的图书记录到库存
+      parameters:
+      - description: 图书信息
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/model.Book'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 添加新图书
+      tags:
+      - book
+  /book/borrow:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过提交图书ID来借阅图书
+      parameters:
+      - description: 用户验证Token
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: 图书ID
+        in: formData
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 借书服务
+      tags:
+      - book
+  /book/delete:
+    delete:
+      consumes:
+      - application/json
+      description: 通过图书ID删除一个图书记录
+      parameters:
+      - description: 图书ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 删除图书
+      tags:
+      - book
+  /book/get:
+    get:
+      consumes:
+      - application/json
+      description: 通过图书ID获取单个图书的详细信息
+      parameters:
+      - description: 图书ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 获取图书信息
+      tags:
+      - book
+  /book/return:
+    post:
+      consumes:
+      - application/json
+      description: 用户通过提交图书ID来归还图书
+      parameters:
+      - description: 用户验证Token
+        in: header
+        name: token
+        required: true
+        type: string
+      - description: 图书ID
+        in: formData
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 还书服务
+      tags:
+      - book
+  /book/save:
+    put:
+      consumes:
+      - application/json
+      description: 保存或更新一个图书记录的信息
+      parameters:
+      - description: 图书ID
+        in: query
+        name: id
+        type: string
+      - description: 图书信息
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/model.Book'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 保存图书信息
+      tags:
+      - book
+  /books/borrowing-record:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有当前借出的图书记录
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 借书记录
+      tags:
+      - book
+  /books/get:
+    get:
+      consumes:
+      - application/json
+      description: 获取所有图书的列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 获取所有图书
+      tags:
+      - book
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: 执行用户登录
+      parameters:
+      - description: login User
+        in: body
+        name: name
+        required: true
+        schema:
+          $ref: '#/definitions/logic.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/tools.ECode'
+      summary: 执行用户登录
+      tags:
+      - login
+  /visitor/login:
+    get:
+      consumes:
+      - text/html
+      description: 进行游客登录并展示游客首页
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: 成功展示游客登录页面
+          schema:
+            type: string
+      summary: 游客登录服务
+      tags:
+      - login
+swagger: "2.0"

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图书管理系统登录</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #71b7e6, #9b59b6);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            width: 340px;
+            padding: 40px;
+            background-color: #ffffff;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            color: #333;
+            margin: 0 0 20px 0;
+        }
+        input[type="text"],
+        input[type="password"],
+        select,
+        input[type="button"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Added for consistent box sizing */
+        }
+        .captcha {
+            position: relative;
+            margin: 10px 0;
+        }
+        .captcha-img {
+            cursor: pointer;
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .login-btn {
+            color: #fff;
+            background-color: #3498db;
+            cursor: pointer;
+            padding: 15px;
+            margin: 10px 0 0;
+            border: none;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+        .login-btn:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+<div class="login-container">
+    <h2>图书管理系统登录</h2>
+    <form id="loginForm">
+        <!-- 微信扫码登录模块 -->
+        <div id="wx-qr-login-area" style="display: none;">
+            <p>请使用微信扫一扫登录</p>
+            <img id="wx-qr-code" src="#" alt="微信登录二维码" />
+            <p id="wx-login-status">等待扫码...</p>
+        </div>
+        <!--手机号验证码登陆-->
+        <div id="sms-login-area" style="display: none;">
+            <input type="text" placeholder="请输入手机号" id="phone" required>
+            <input type="button" id="send_sms_btn" value="发送验证码" class="login-btn">
+            <input type="text" placeholder="请输入短信验证码" id="sms_captcha" required>
+        </div>
+        <!-- 增加一个新的表单区域用于邮箱验证码登录 -->
+        <div id="email-login-area" style="display: none;">
+            <input type="text" placeholder="请输入邮箱" id="email" required>
+            <!-- 添加一个按钮用来发送验证码 -->
+            <input type="button" id="send_email_btn" value="发送验证码" onclick="sendEmail()" class="login-btn">
+            <input type="text" placeholder="请输入邮箱验证码" id="email_captcha" required>
+        </div>
+        <!-- 正常登录模块 -->
+        <div id="login-area" style="display: block;">
+        <input type="text" placeholder="请输入用户名" id="name" required>
+        <input type="password" placeholder="请输入密码" id="password" required>
+        <div class="captcha">
+            <input type="text" placeholder="请输入验证码" id="captcha_value" required>
+            <img src="" alt="验证码" id="image-captcha" class="captcha-img">
+            <input type="hidden" id="captcha_id">
+        </div>
+        <select id="role">
+            <option value="user">普通用户</option>
+            <option value="admin">管理员</option>
+            <option value="visitor">游客</option>
+        </select>
+        </div>
+        <!-- 正常登录模块 -->
+        <div id="login1" style="display: block;">
+        <input type="button" id="login_sub" value="登录" class="login-btn">
+
+        <!-- 在原有的登录表单下方添加一个按钮用于切换到邮箱验证码登录模式 -->
+        <input type="button" id="switch_to_email_btn" value="使用邮箱验证码登录" onclick="switchToEmailLogin()" class="login-btn">
+
+        <input type="button" id="switch_to_sms_btn" value="使用短信验证码登录" onclick="switchToSMSLogin()" class="login-btn">
+
+        <!-- 在原有的登录按钮下面添加微信扫码登录按钮 -->
+        <input type="button" id="wx_login_btn" value="微信扫码登录" onclick="switchToWxQrLogin()" class="login-btn">
+
+        <div id="wx-qr-modal" style="display:none">
+            <img id="wx-qr-code-img" src="" alt="微信扫码登录" />
+            <!-- 适当的按钮或者链接来关闭这个模态框 -->
+            <button onclick="$('#wx-qr-modal').hide();">关闭</button>
+        </div>
+        </div>
+    </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+
+    // 验证码加载逻辑
+    function loadCaptcha(){
+        // 验证码加载逻辑
+        $.ajax({
+            url: "/captcha",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                console.log(data);
+                $("#image-captcha").attr("src", data.data.data);
+                $("#captcha_id").val(data.data.captcha_id);
+            },
+            error: function () {
+                alert("验证码加载失败，请重试！");
+            }
+        });
+    }
+
+    // 切换到邮箱验证码登录模式
+    function switchToEmailLogin() {
+        // 隐藏原有登录表单，显示邮箱验证码登录表单
+        $("#email-login-area").show();
+        // 隐藏切换按钮
+        $("#switch_to_email_btn").hide();
+        // 可以有额外的逻辑来调整表单布局等
+    }
+
+    // 发送邮箱验证码
+    function sendEmail() {
+        var email = $("#email").val();
+        var data = { email: email }; // 直接使用对象而非JSON字符串
+        $.ajax({
+            url: '/user/SendEmailCaptcha',
+            type: 'POST',
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            dataType: 'json',
+            success: function(response) {
+                if(response.code === 0) {
+                    alert('验证码已发送至您的邮箱，请查收！');
+                } else {
+                    alert('验证码发送失败：' + response.message);
+                }
+            },
+            error: function() {
+                alert('请求失败，请稍后重试！');
+            }
+        });
+    }
+
+    // 登录逻辑封装为独立的函数
+    function login() {
+        var postData = {
+            name: $("#name").val(),
+            password: $("#password").val(),
+            captcha_id: $("#captcha_id").val(),
+            captcha_value: $("#captcha_value").val(),
+            role: $("#role").val() // 从下拉菜单获取角色
+        };
+        // 这里根据选定的角色发送到不同的登录接口
+        var loginUrl;
+        switch(postData.role) {
+            case "admin":
+                loginUrl = "/admin/login";
+                break;
+            case "user":
+                loginUrl = "/user/login";
+                break;
+            case "visitor":
+                loginUrl = "/visitor/VisitorLogin";
+                return; // 游客无需登录验证
+            default:
+                alert("未知角色！");
+                return;
+        }
+
+        $.ajax({
+            // 请求资源路径
+            url: loginUrl,
+            // 请求参数
+            contentType: "application/json", // 确保发送JSON数据
+            data: JSON.stringify(postData), // 将对象转换成JSON字符串
+            // 请求方式
+            type: "post",
+            // 数据形式
+            dataType: "json",
+            // 请求成功后调用的回调函数
+            success: function (data) {
+                if (data.code !== 0) {
+                    alert(data.message);
+                } else {
+                    alert("登录成功");
+                    // 根据角色跳转到不同页面
+                    if(postData.role === "admin") {
+                        window.location.replace("/admin/AdminLogin"); // 管理员面板
+                    }
+                    if(postData.role === "user") {
+                        window.location.replace("/user/UserLogin"); // 用户面板
+                    }
+                }
+            },
+            // 请求失败后调用的回调函数
+            error: function () {
+                alert("网络或服务器问题，登录失败，请稍后重试！");
+            }
+        });
+    }
+
+
+    // 当登录按钮被点击
+    $("#login_sub").on("click", function () {
+        var loginFunction = function() {
+            // 如果都验证通过，则执行登录逻辑
+            login();
+        };
+
+        if ($("#email-login-area").is(":visible")) {
+            // 如果显示邮箱验证码登录表单，则首先验证验证码
+            var emailData = {
+                email: $("#email").val(),
+                captcha: $("#email_captcha").val()
+            };
+            $.ajax({
+                url: '/user/VerifyEmailCaptcha',
+                type: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify(emailData),
+                dataType: 'json',
+                success: function (response) {
+                    if(response.code === 0) {
+                        alert('邮箱验证码验证成功，正在进行登录...');
+                        loginFunction(); // 调用登录函数进行登录
+                    } else {
+                        alert('邮箱验证码验证失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('验证邮箱验证码请求失败，请稍后重试！');
+                }
+            });
+        } else if ($("#sms-login-area").is(":visible")) {
+            // 短信验证码登录逻辑
+            var smsData = {
+                phone: $("#phone").val(),
+                sms_captcha: $("#sms_captcha").val()
+            };
+            $.ajax({
+                url: '/user/VerifySMSCaptcha',
+                type: 'POST',
+                contentType: "application/json",
+                data: JSON.stringify(smsData),
+                dataType: 'json',
+                success: function (response) {
+                    if(response.code === 0) {
+                        alert('短信验证码验证成功，正在进行登录...');
+                        loginFunction(); // 调用登录函数进行登录
+                    } else {
+                        alert('短信验证码验证失败：' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('验证短信验证码请求失败，请稍后重试！');
+                }
+            });
+        }else {
+            // 如果没有显示邮箱验证码登录表单，则直接登录
+            loginFunction();
+        }
+    });
+
+    //加载验证码
+    $(document).ready(function(){
+        loadCaptcha();
+        $("#image-captcha").on("click", function() {
+            loadCaptcha();
+        });
+    });
+
+    // 切换到短信验证码登录模式
+    function switchToSMSLogin() {
+        $("#sms-login-area").show();
+        $("#email-login-area, #switch_to_email_btn").hide();
+    }
+    // 发送验证码
+    document.getElementById('send_sms_btn').addEventListener('click', function() {
+        var phone = document.getElementById('phone').value;
+        fetch('/user/SendSMSCaptcha', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                phone_number: phone
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                if (data.message) {
+                    alert("验证码发送成功，请检查您的手机短信。");
+                } else {
+                    alert("验证码发送失败：" + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('发送验证码出错：', error);
+            });
+    });
+
+
+    // 函数切换到微信扫码登录模式
+    function switchToWxQrLogin() {
+        // 隐藏短信、邮箱和原有的二维码登录区域
+        $("#login1,#login-area, #sms-login-area, #email-login-area, #qr-login-area").hide();
+        // 显示微信二维码登录区域
+        $("#wx-qr-login-area").show();
+
+        // 呼叫获取微信二维码的函数
+        getWxQrCode();
+    }
+
+
+    // 获取微信二维码
+    function getWxQrCode() {
+        $.ajax({
+            url: "/user/wechat/login?Url=c5u2zk.natappfree.cc", // 这里应该是你后端的接口url
+            type: "GET",
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function(response, status, xhr) {
+                var imgURL = URL.createObjectURL(response);
+                $('#wx-qr-code').attr('src', imgURL);
+
+                // 假设你从后端获取到state值
+                var state = xhr.getResponseHeader("X-WeChat-State");
+
+                // 成功获取二维码后，开始轮询检查登录状态
+                pollingCheckLoginAndRedirect(state);
+            },
+            error: function(xhr, status, error) {
+                $('#wx-login-status').text('获取登录二维码失败，请重试');
+            }
+        });
+    }
+
+    function updateLoginStatusAndRedirect(state) {
+        fetch('/user/GetToken?state=' + encodeURIComponent(state))
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('网络响应不是ok状态');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // 保存token到cookie中
+                if (data.token) {
+                    document.cookie = "token=" + encodeURIComponent(data.token) + ";path=/;max-age=3600"; // 假设token有效期是1小时
+                    // 登录状态更新后，执行页面跳转
+                    window.location.href = "/user/UserLogin"; // 用户面板
+                } else {
+                    throw new Error('未收到token');
+                }
+            })
+            .catch(err => {
+                console.error('An error occurred: ', err);
+                // 弹出错误提示或写入日志
+            });
+    }
+
+    function pollingCheckLoginAndRedirect(state) {
+        const poll = setInterval(() => {
+            checkLogin(state)
+                .then(response => {
+                    if (response.data && response.data.code === 200) {
+                        clearInterval(poll);
+                        updateLoginStatusAndRedirect(state);
+                    }
+                })
+                .catch(err => {
+                    console.log(err);
+                    clearInterval(poll);
+                });
+        }, 3000); // 每3秒检查一次
+    }
+
+    function checkLogin(state) {
+        return axios.get("/user/wechat/check_login", {
+            params: {
+                state: state
+            }
+        });
+    }
+
+</script>
+</body>
+</html>

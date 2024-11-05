@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户信息表格</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="users-tab" data-toggle="tab" href="#users" role="tab" aria-controls="users" aria-selected="true">用户信息</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="roles-tab" data-toggle="tab" href="#roles" role="tab" aria-controls="roles" aria-selected="false">角色管理</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="permissions-tab" data-toggle="tab" href="#permissions" role="tab" aria-controls="permissions" aria-selected="false">权限管理</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="assign-tab" data-toggle="tab" href="#assign" role="tab" aria-controls="assign" aria-selected="false">用户角色分配</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="role-permissions-tab" data-toggle="tab" href="#role-permissions" role="tab" aria-controls="role-permissions" aria-selected="false">角色权限分配</a>
+        </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+            <!-- 用户信息表格 -->
+            <h2 class="mb-4">用户信息</h2>
+            <table class="table">
+                <thead class="thead-dark">
+                <tr>
+                    <th>用户 ID</th>
+                    <th>用户 name</th>
+                    <th>创建时间</th>
+                    <th>更新时间</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="borrowRecords">
+                <!-- 借阅记录将通过JavaScript填充到这里 -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 角色管理内容 -->
+        <div class="tab-pane fade" id="roles" role="tabpanel" aria-labelledby="roles-tab">
+            <h2 class="mb-4">角色管理</h2>
+            <button class="btn btn-primary mb-3" onclick="showAddRoleForm()">添加角色</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>角色 ID</th>
+                    <th>角色名称</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="rolesList">
+                <!-- 角色列表将通过JavaScript填充到这里 -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 权限管理内容 -->
+        <div class="tab-pane fade" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+            <h2 class="mb-4">权限管理</h2>
+            <button class="btn btn-primary mb-3" onclick="showAddPermissionForm()">添加权限</button>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>权限 ID</th>
+                    <th>权限名称</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody id="permissionsList">
+                <!-- 权限列表将通过JavaScript填充到这里 -->
+                </tbody>
+            </table>
+        </div>
+        <!-- 用户角色分配内容 -->
+        <div class="tab-pane fade" id="assign" role="tabpanel" aria-labelledby="assign-tab">
+            <h2 class="mb-4">用户角色分配</h2>
+            <form id="assignRoleForm">
+                <div class="form-group">
+                    <label for="selectUser">选择用户:</label>
+                    <select class="form-control" id="selectUser">
+                        <!-- 用户选项将通过JavaScript填充到这里 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="selectRole">分配角色:</label>
+                    <select multiple class="form-control" id="selectRole">
+                        <!-- 角色选项将通过JavaScript填充到这里 -->
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">分配角色</button>
+            </form>
+        </div>
+        <!-- 角色权限分配内容 -->
+        <div class="tab-pane fade" id="role-permissions" role="tabpanel" aria-labelledby="role-permissions-tab">
+            <h2 class="mb-4">角色权限分配</h2>
+            <form id="assignPermissionForm">
+                <div class="form-group">
+                    <label for="selectRoleForPermission">选择角色:</label>
+                    <select class="form-control" id="selectRoleForPermission">
+                        <!-- 角色选项将通过JavaScript填充到这里 -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="selectPermission">分配权限:</label>
+                    <select multiple class="form-control" id="selectPermission">
+                        <!-- 权限选项将通过JavaScript填充到这里 -->
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">分配权限</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+
+    </div>
+</div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script>
+    let data = []; // 将数据定义在全局作用域中
+    $(document).ready(function () {
+        $.ajax({
+            url: '/user/UserList', // 后端提供的API接口地址
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                // 假设后端返回的数据结构是{ data: [...] }
+                loadTableData(response);
+                data = response
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching data: ', textStatus, errorThrown);
+                // 可以将错误显示给用户，或者添加一个默认的数据行提示
+                document.getElementById('borrowRecords').innerHTML = `
+                        <tr>
+                            <td colspan="7">加载数据时出错，请重试</td>
+                        </tr>
+                    `;
+            }
+        });
+    });
+
+    function createRow(record) {
+        return `
+         <tr>
+            <td>${record.id}</td>
+            <td>${record.name}</td>
+            <td>${new Date(record.created_time).toLocaleString()}</td>
+            <td>${new Date(record.updated_time).toLocaleString()}</td>
+            <td>
+                <button type="button" class="btn btn-info btn-sm" onclick="viewRecord(${record.id})">查看</button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="editRecord(${record.id})">修改</button>
+                <button type="button" class="btn btn-danger btn-sm" onclick="deleteRecord(${record.id})">删除</button>
+            </td>
+        </tr>
+            `;
+    }
+
+    function loadTableData(data) {
+        const tableBody = document.getElementById('borrowRecords');
+        if (data && data.length > 0) {
+            tableBody.innerHTML = data.map(createRow).join('');
+        } else {
+            tableBody.innerHTML = '<tr><td colspan="7">没有借阅记录</td></tr>';
+        }
+    }
+
+    function viewRecord(id) {
+        alert("查看记录功能未实现，记录ID: " + id);
+        // 这里可以加入查看详情记录的逻辑
+    }
+
+    function editRecord(id) {
+        // 使用ID获取当前记录的数据
+        // 假设 data 是从网络加载的所有记录
+        const record = data.find(item => item.id === id);
+        // 将数据填充到模态框表单中
+        if (record) {
+            $("#userId").val(record.user_id);
+            $("#bookId").val(record.book_id);
+            $("#status").val(record.status.toString());
+            $("#time").val(record.time);
+
+            // 将当前编辑的记录ID保存，用于在保存修改后提交到服务器
+            $("#editForm").data("recordId", id);
+
+            // 显示模态框
+            $("#editModal").modal('show');
+        } else {
+            alert("记录未找到!");
+        }
+    }
+
+    function saveChanges() {
+        // 获取当前记录的ID和修改后表单中的数据
+        const recordId = $("#editForm").data("recordId");
+        const userId = $("#userId").val();
+        const bookId = $("#bookId").val();
+        const status = $("#status").val();
+        const time = $("#time").val();
+
+        // 构造请求的数据对象
+        const updatedRecord = {
+            id: recordId,
+            user_id: userId,
+            book_id: bookId,
+            status: parseInt(status),
+            time: parseInt(time)
+        };
+
+        // TODO: 发送数据到服务器进行更新
+        // 使用AJAX或Fetch API发送PUT请求
+        console.log("更新的记录", updatedRecord);
+
+        // 关闭模态框
+        $("#editModal").modal('hide');
+    }
+
+    function deleteRecord(id) {
+        const confirmed = confirm("确定要删除记录ID: " + id + " 吗?");
+        if (confirmed) {
+            // 执行删除操作，可能需要发送删除请求到后端API
+            alert("删除记录功能未实现");
+        }
+    }
+
+    function fetchRoles() {
+        $.ajax({
+            url: '/rights/GetRoles',
+            type: 'GET',
+            dataType: 'json', // 假设后端返回的数据是JSON格式
+            success: function(data) {
+                var rowsHtml = '';
+                data.forEach(function(role) {
+                    rowsHtml += '<tr>'+
+                        '<td>' + role.RoleId + '</td>'+
+                        '<td>' + role.RoleName + '</td>'+
+                        '<td><button class="btn btn-info btn-sm" onclick="editRole(' + role.RoleId + ')">编辑</button> '+
+                        '<button class="btn btn-danger btn-sm" onclick="deleteRole(' + role.RoleId + ')">删除</button></td>'+
+                        '</tr>';
+                });
+                $('#rolesList').html(rowsHtml);
+            },
+            error: function(error) {
+                console.log('Error fetching roles:', error);
+            }
+        });
+    }
+
+    // 调用函数获取角色数据并填充表格
+    $(document).ready(function() {
+        fetchRoles();
+    });
+
+    //权限部分
+    function fetchPermissions() {
+        $.ajax({
+            url: '/rights/GetPermissions',
+            type: 'GET',
+            dataType: 'json', // Assuming the response is in JSON format
+            success: function(data) {
+                var rowsHtml = '';
+                data.forEach(function(permission) {
+                    rowsHtml += '<tr>'+
+                        '<td>' + permission.PermissionId + '</td>'+
+                        '<td>' + permission.PermissionName + '</td>'+
+                        '<td><button class="btn btn-info btn-sm" onclick="editPermission(' + permission.PermissionId + ')">编辑</button> '+
+                        '<button class="btn btn-danger btn-sm" onclick="deletePermission(' + permission.PermissionId + ')">删除</button></td>'+
+                        '</tr>';
+                });
+                $('#permissionsList').html(rowsHtml);
+            },
+            error: function(error) {
+                console.log('Error fetching permissions:', error);
+            }
+        });
+    }
+
+    // Call fetchPermissions when the document is ready.
+    $(document).ready(function() {
+        fetchPermissions();
+    });
+
+    //用户权限管理
+    // 请求并填充用户数据
+    function fetchUsers() {
+        $.ajax({
+            url: '/user/UserList', // 需要一个接口来获取用户列表
+            type: 'GET',
+            success: function(data) {
+                var userOptions = '';
+                data.forEach(function(user) {
+                    userOptions += '<option value="' + user.id + '">' + user.name + '</option>';
+                });
+                $('#selectUser').html(userOptions);
+            },
+            error: function(error) {
+                console.log('Error fetching users:', error);
+            }
+        });
+    }
+
+    // 请求并填充角色数据
+    function fetchRoles1() {
+        $.ajax({
+            url: '/rights/GetRoles', // 假设这里是获取角色列表的接口
+            type: 'GET',
+            success: function(data) {
+                var roleOptions = '';
+                data.forEach(function(role) {
+                    roleOptions += '<option value="' + role.RoleId + '">' + role.RoleName + '</option>';
+                });
+                $('#selectRole').html(roleOptions);
+            },
+            error: function(error) {
+                console.log('Error fetching roles:', error);
+            }
+        });
+    }
+
+    // 将权限和角色的关系填充到表单中（可能需要一个单独的数据结构来管理这种关系）
+    // 这里未展示权限数据填充的具体实现，通常这种情况下，您可能不需要在用户角色分配中直接显示权限。
+    // 如果需要，您可以增加一个额外的表格或界面元素来展示和管理角色和其权限的关系。
+
+    $(document).ready(function() {
+        // 初始化数据
+        fetchUsers();
+        fetchRoles1();
+
+        // 表单提交处理
+        $('#assignRoleForm').submit(function(event) {
+            event.preventDefault(); // 阻止表单默认提交
+
+            var selectedUser = $('#selectUser').val(); // 获取选中的用户ID
+            var selectedRoles = $('#selectRole').val(); // 获取选中的角色ID，这是一个数组
+
+            // 改为正确的请求方法 PUT
+            $.ajax({
+                url: '/rights/UpdateRole_Pre',
+                type: 'PUT', // 后端期待的是 PUT 方法
+                contentType: 'application/json', // 发送的数据类型为JSON
+                data: JSON.stringify({
+                    userid: parseInt(selectedUser), // 确保数据类型为整数
+                    roleid: parseInt(selectedRoles[0]) // 确保数据类型为整数
+                }),
+                success: function(response) {
+                    // 处理成功的响应
+                    alert('角色已成功分配给用户!');
+                    // 在实际应用中，您可能希望在这里更新前端的UI，例如重新加载用户列表
+                },
+                error: function(xhr, status, error) {
+                    // 处理失败的响应
+                    var errorMessage = xhr.status + ': ' + xhr.statusText
+                    alert('分配角色失败 - ' + errorMessage);
+                }
+            });
+        });
+    });
+
+    //角色权限模块
+    // 请求并填充角色数据
+    function fetchRoleForPermission() {
+        $.ajax({
+            url: '/rights/GetRoles', // 获取角色列表的接口
+            type: 'GET',
+            success: function(data) {
+                var roleOptions = '';
+                data.forEach(function(role) {
+                    roleOptions += '<option value="' + role.RoleId + '">' + role.RoleName + '</option>';
+                });
+                $('#selectRoleForPermission').html(roleOptions);
+            },
+            error: function(error) {
+                console.log('Error fetching roles:', error);
+            }
+        });
+    }
+
+    // 请求并填充权限数据
+    function fetchPermissions1() {
+        $.ajax({
+            url: '/rights/GetPermissions', // 获取权限列表的接口
+            type: 'GET',
+            success: function(data) {
+                var permissionOptions = '';
+                data.forEach(function(permission) {
+                    permissionOptions += '<option value="' + permission.PermissionId + '">' + permission.PermissionName + '</option>';
+                });
+                $('#selectPermission').html(permissionOptions);
+            },
+            error: function(error) {
+                console.log('Error fetching permissions:', error);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        // 初始化数据
+        fetchRoleForPermission(); // 假设这是正确的函数名来获取角色
+        fetchPermissions1(); // 假设这是获取权限的函数
+
+        // 表单提交处理
+        $('#assignPermissionForm').submit(function(event) {
+            event.preventDefault(); // 阻止表单默认提交
+
+            var selectedRole = $('#selectRoleForPermission').val(); // 获取选中的角色ID
+            var selectedPermissions = $('#selectPermission').val(); // 获取选中的权限ID数组
+
+            // 遍历权限ID数组并为每个权限ID发送一个POST请求给服务器端
+            selectedPermissions.forEach(function(permissionId) {
+                $.ajax({
+                    url: '/rights/UpdateUer_Roles', // 请确保这个URL正确并且服务器已经正确处理了对应的POST请求
+                    type: 'POST',
+                    contentType: 'application/json', // 发送的数据类型为JSON
+                    data: JSON.stringify({
+                        roleid: parseInt(selectedRole),
+                        permissionid: parseInt(permissionId) // 由于后端期待单个权限ID，这里只发送当前循环中的权限ID
+                    }),
+                    success: function(response) {
+                        // 输出后端返回的信息
+                        alert(response.message); // 假设后端返回的数据中包含了message字段
+                    },
+                    error: function(xhr, status, error) {
+                        // 处理失败的响应
+                        alert('分配权限失败: ' + error);
+                    }
+                });
+            });
+
+        });
+    });
+</script>

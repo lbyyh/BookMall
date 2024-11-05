@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片批量上传</title>
+    <style>
+        .image-preview {
+            margin-top: 20px;
+        }
+        .image-preview img {
+            margin: 10px;
+            max-width: 150px;
+            max-height: 150px;
+        }
+    </style>
+</head>
+<body>
+<input type="file" id="image-input" multiple>
+<button id="upload-btn">上传图片</button>
+<div id="image-preview" class="image-preview"></div>
+
+<script>
+    document.getElementById('image-input').addEventListener('change', function(event) {
+        const files = event.target.files;
+        const preview = document.getElementById('image-preview');
+        preview.innerHTML = ''; // 清空当前的预览
+
+        if(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    });
+
+    // 上传图片的函数
+    function uploadImages(files) {
+        const formData = new FormData();
+        for(const file of files) {
+            formData.append('avatar', file); // 'images' 是后端接口指定的字段名
+        }
+
+        // 使用 fetch 发送 formData 到服务器
+        fetch('/user/PicUpload', { // 替换 YOUR_BACKEND_ENDPOINT 为你的实际上传接口地址
+            method: 'POST',
+            body: formData,
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                alert('图片上传成功！');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('图片上传失败！');
+            });
+    }
+
+    document.getElementById('upload-btn').addEventListener('click', function() {
+        const files = document.getElementById('image-input').files;
+        if(files.length > 0) {
+            uploadImages(files);
+        } else {
+            alert('请先选择文件！');
+        }
+    });
+</script>
+</body>
+</html>

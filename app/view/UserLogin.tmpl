@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>图书管理系统用户界面</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-grow: 1;
+        }
+
+        .content {
+            flex-grow: 1;
+            overflow: auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+            background-color: #f8f9fa;
+            text-align: center;
+        }
+
+        h1, p {
+            margin: 0;
+        }
+
+        h1 {
+            color: #6c757d;
+        }
+
+        nav {
+            background-color: #e9ecef;
+            padding: 15px;
+            flex-basis: 200px;
+            height: 100%;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #212529;
+            padding: 10px;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+            display: flex;
+            align-items: center;
+            border-radius: 5px;
+        }
+
+        nav a:hover {
+            background-color: #0d6efd;
+            color: #fff;
+        }
+
+        footer {
+            background-color: #f8f9fa;
+            text-align: center;
+            padding: 10px;
+        }
+        .user-label {
+            font-size: 29px;
+            color: #5a6268;
+            padding: 10px;
+        }
+        .logout-btn {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>图书管理</h1>
+    <p>学的不仅是技术，更是技术！</p>
+    <button class="logout-btn" onclick="logout();">退出登录</button>
+</header>
+
+<div class="container">
+    <nav>
+        <p class="user-label">用户功能</p>
+        <a href="#" onclick="loadContent('/BookList'); return false;">图书列表</a>
+        <a href="#" onclick="loadContent('/BookBS'); return false;">图书买卖</a>
+        <a href="#" onclick="loadContent('/BorrowingRecord'); return false;">图书管理-借书记录查询</a>
+        <a href="#" onclick="loadContent('/PictureUpload'); return false;">图片上传</a>
+    </nav>
+
+    <iframe id="contentFrame" src="" class="content"></iframe>
+</div>
+
+<footer>
+    <p>©2024 图书管理系统. All rights reserved.</p>
+</footer>
+<script>
+    function loadContent(url) {
+        document.getElementById('contentFrame').src = url;
+    }
+    function logout() {
+        window.location.replace("/index"); // 管理员面板
+    }
+</script>
+</body>
+</html>

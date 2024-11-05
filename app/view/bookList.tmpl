@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图书管理系统</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        h1 {
+            color: #8BC34A;
+            text-align: center;
+        }
+        h2 {
+            color: #689F38;
+            text-align: center;
+        }
+        #book-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-evenly;
+            padding: 0;
+            list-style-type: none;
+            margin: 0 auto;
+        }
+        #book-list li {
+            background-color: #DCEDC8;
+            border: 1px solid #C5E1A5;
+            padding: 15px;
+            margin-bottom: 20px; /* 增加底部外边距 */
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: calc(100% / 3 - 20px); /* 三列布局，并适当减小宽度 */
+            display: flex;
+            align-items: center; /* 垂直居中 */
+            justify-content: space-between; /* 横向分布 */
+        }
+        .book-info {
+            margin-right: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            background-color: #8BC34A;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 20px; /* 圆角边框 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease; /* 添加过渡效果 */
+        }
+        /*.btn btn-return {*/
+        /*    margin-top: 30px;*/
+        /*}*/
+        .btn:hover {
+            background-color: #7CB342;
+            transform: translateY(-2px); /* 轻微上移 */
+        }
+        .btn:active {
+            transform: translateY(1px); /* 按下时内陷效果 */
+        }
+        .btn:disabled {
+            background-color: #CDDC39;
+            cursor: not-allowed;
+            box-shadow: none; /* 禁用时无阴影 */
+        }
+        /* CSS部分继续在现有代码基础上添加 */
+        .btn {
+            /* ... 现有样式不变 ... */
+            margin: 5px 5px; /* 四周留出空间，避免相邻按钮紧挨 */
+        }
+        .book-image {
+            width: 80px; /* 或者其他适合的大小 */
+            height: 100px; /* 或者其他适合的大小 */
+            object-fit: cover; /* 保证图片的宽高比 */
+            margin-right: 15px; /* 图片与标题之间的间隙 */
+            border-radius: 5px; /* 可以按需求设定，这里设置圆角使图片更美观 */
+        }
+        #logout-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .book-item {
+            display: flex;
+            align-items: center; /* 和文字内容垂直居中 */
+            margin-bottom: 20px; /* 书籍之间的间隔 */
+        }
+        .book-item img {
+            width: 100px; /* 图像宽度 */
+            height: 150px; /* 图像高度 */
+            object-fit: cover; /* 保持图像比例，填充整个元素大小 */
+            margin-right: 20px; /* 和文本内容的间隔 */
+            border-radius: 5px; /* 图像圆角 */
+        }
+        #pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px; /* 或者任何适当的边距 */
+        }
+        #pagination button {
+            margin: 0 5px; /* 两侧留一点空间 */
+        }
+
+        #avatar-container {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 10px;
+            right: 10px; /* 也可以调整为 right: 60px; 以与退出按钮分开 */
+            z-index: 1000; /* 确保头像容器在最上层 */
+            background-color: #fff;
+            padding: 5px;
+            border-radius: 25px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 8px; /* 与更改按钮之间的间距 */
+            border: 2px solid #C5E1A5; /* 头像边框 */
+        }
+
+        #change-avatar-button {
+            padding: 6px 16px;
+            background-color: #8BC34A;
+            color: white;
+            font-size: 14px;
+            border: none;
+            cursor: pointer;
+            border-radius: 15px;
+            transition: background-color 0.3s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #change-avatar-button:hover {
+            background-color: #7CB342;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #change-avatar-button:active {
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 还可以添加一个小图标 */
+        #change-avatar-button::before {
+            content: '\f040'; /* FontAwesome的上传图标代码 */
+            font-family: 'FontAwesome';
+            margin-right: 8px; /* 图标与文本之间的间距 */
+        }
+
+        /* 确保上传文件的input看起来与按钮融合在一起 */
+        #avatar-input {
+            display: none; /* 隐藏文件输入但仍然可以通过程序触发 */
+        }
+
+        #user-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px; /* 将面板移动到左侧 */
+            display: flex;
+            flex-direction: column; /* 子元素按列排列 */
+            align-items: center; /* 子元素水平居中 */
+            z-index: 1000;
+        }
+
+        #avatar-container {
+            cursor: pointer; /* 使用户知道这是一个可以点击的元素 */
+            margin-bottom: 5px; /* 头像与更换头像按钮的间距 */
+        }
+
+        #user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #C5E1A5;
+        }
+
+        #logout-button {
+            background-color: #f44336;
+            transition: background-color 0.3s ease;
+            position: fixed; /* 改为固定定位 */
+            left: 10px; /* 设置于左侧边缘一定距离 */
+            width: 130px;
+        }
+
+        #logout-button:hover {
+            background-color: #d32f2f; /* 鼠标悬停时的背景颜色变化 */
+        }
+    </style>
+</head>
+<body>
+
+<div id="user-panel">
+    <!-- 头像容器，点击触发 file input -->
+    <div id="avatar-container" onclick="document.getElementById('avatar-input').click()">
+        <img id="user-avatar" alt="用户头像" />
+    </div>
+    <!-- 隐藏的 file input -->
+    <input type="file" id="avatar-input" accept="image/*" hidden onchange="uploadAvatar(this)">
+</div>
+<!-- 退出登录按钮 -->
+<button id="logout-button" onclick="logout()">退出登录</button>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<h1>欢迎来到图书管理系统</h1>
+
+
+<h2>图书列表</h2>
+<ul id="book-list">
+    <!-- 书籍列表将通过JavaScript动态填充 -->
+</ul>
+<div id="pagination">
+    <button id="prev-page" onclick="changePage(-1)">上一页</button>
+    <span id="current-page">1</span>
+    <button id="next-page" onclick="changePage(1)">下一页</button>
+</div>
+<script>
+    let currentPage = 1; // 当前页码，默认为第一页
+    let perPage = 10; // 每页显示的书籍数量，默认为10
+    $(document).ready(function() {
+        loadBooks(currentPage);
+    });
+
+    // 加载指定页码的书籍数据
+    function loadBooks(page) {
+        $.ajax({
+            url: '/book_info/list?page=' + page + '&perPage=' + perPage,
+            type: 'GET',
+            dataType: 'json',
+            success: function(result) {
+                if(result.code === 0) {
+                    displayBooks(result.data.books); // 渲染书籍数据到页面上
+                    updatePagination(result.data.totalPages); // 更新分页控件
+                } else {
+                    console.error('加载图书列表失败:', result.message);
+                }
+            },
+            error: function(error) {
+                console.error('请求图书列表出错:', error.statusText);
+            }
+        });
+    }
+
+    // 显示书籍列表
+    function displayBooks(books) {
+        const bookList = $('#book-list');
+        bookList.empty(); // 清空现有的书籍列表
+
+        books.forEach(function(book) {
+            bookList.append(
+                `<li class="book-item">
+                <img class="book-image" src="${book.ImgUrl}" alt="${book.BookName}" />
+                <div class="book-info">
+                    <strong>${book.BookName}</strong><br>
+                    作者: ${book.Author}<br>
+                    出版社: ${book.PublishingHouse}<br>
+                    出版日期: ${book.PublishDate}<br>
+                </div>
+                <div>
+                    <button class="btn detail-button" data-id="${book.Id}">详情</button>
+                    <button class="btn btn-borrow" data-id="${book.Id}">借书</button>
+                    <button class="btn btn-return" data-id="${book.Id}">还书</button>
+                </div>
+            </li>`
+            );
+        });
+    }
+
+    // 更新分页控件
+    function updatePagination(totalPages) {
+        $('#current-page').text(currentPage + '/' + totalPages);
+        $('#prev-page').prop('disabled', currentPage === 1);
+        $('#next-page').prop('disabled', currentPage === totalPages);
+    }
+
+
+    // 翻页函数
+    function changePage(direction) {
+        if(direction === -1 && currentPage > 1) {
+            currentPage--;
+        } else if(direction === 1) {
+            currentPage++;
+        }
+        console.log(currentPage)
+        loadBooks(currentPage);
+    }
+
+    $(document).on('click', '.btn-borrow', function() {
+        const bookId = $(this).data('id');
+        borrowBook(bookId);
+    });
+
+    $(document).on('click', '.btn-return', function() {
+        const bookId = $(this).data('id');
+        returnBook(bookId);
+    });
+
+    function borrowBook(bookId) {
+        var postData = { 'Id': bookId };
+        $.ajax({
+            url: "/user/book_info/borrow",
+            data: postData,
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                if (data.code !== 0) {
+                    alert(data.message);
+                } else {
+                    alert("借书成功");
+                    loadBooks(currentPage); // 借书成功后，刷新图书列表
+                }
+            },
+            error: function (xhr) {
+                if(xhr.status === 429) {
+                    // 由于频率限制导致的错误
+                    alert("借书次数过于频繁，请稍后再试！");
+                } else {
+                    alert("网络或服务器问题，操作失败，请稍后重试！");
+                }
+            }
+        });
+    }
+
+    function returnBook(bookId) {
+        var postData = { 'Id': bookId };
+        $.ajax({
+            url: "/user/book_info/return",
+            data: postData,
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                if (data.code !== 0) {
+                    alert(data.message);
+                } else {
+                    alert("还书成功");
+                    loadBooks(currentPage); // 还书成功后，刷新图书列表
+                }
+            },
+            error: function (xhr) {
+                if(xhr.status === 429) {
+                    // 由于频率限制导致的错误
+                    alert("还书次数过于频繁，请稍后再试！");
+                } else {
+                    alert("网络或服务器问题，操作失败，请稍后重试！");
+                }
+            }
+        });
+    }
+    function uploadAvatar(input) {
+        if (input.files && input.files[0]) {
+            // 创建一个 FormData 对象并追加 file
+            var formData = new FormData();
+            formData.append('avatar', input.files[0]);
+
+            // 发送 AJAX 请求上传文件
+            $.ajax({
+                url: '/user/uploadAvatar', // 服务器上传接口
+                type: 'POST',
+                data: formData,
+                contentType: false, // 这一项必须设置
+                processData: false, // 这一项也必须设置
+                success: function(response) {
+                    // 替换头像图片的 src 为新上传的图片
+                    $('#user-avatar').attr('src', response.filePath);
+                },
+                error: function() {
+                    // 错误处理
+                    alert('上传失败，请重试。');
+                }
+            });
+        }
+    }
+
+    // 用于预览选择的图片
+    function readURL(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                $('#user-avatar').attr('src', e.target.result);
+            };
+
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // 设置 file input 的 onchange 事件以预览图片
+    $('#avatar-input').change(function() {
+        readURL(this);
+    });
+
+    //退出登陆
+    function logout() {
+        // 实际的退出登录代码可能要依赖于你使用的后端和认证方法
+        // 下面是一个示例逻辑，真实情况下需要发起到服务器的请求
+        // $.ajax({...});
+        alert('退出登录成功！');
+        // 通常退出登录后会跳转到登录页面或者主页
+        window.location.replace("/index");
+    }
+</script>
+
+</body>
+</html>
